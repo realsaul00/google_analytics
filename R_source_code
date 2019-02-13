@@ -1,0 +1,113 @@
+# open csv file in R studio
+purchases_ga <- read.csv("~/Desktop/purchases_ga.csv", header = TRUE, sep = ',')
+
+# make a copy of 
+pur <- purchases_ga
+
+# use the summary function to understand the first four columns
+summary(pur[1:4])
+
+summary(pur[20:24])
+
+# use the str function to see the structure of the dataseet
+str(pur[1:4])
+
+str(pur[20:24])
+
+# change date features to factors
+pur$month <- as.factor(pur$month)
+pur$day <- as.factor(pur$day)
+pur$year <- as.factor(pur$year)
+pur$weekday <- as.factor(pur$weekday)
+
+# verify that those changes took place
+summary(pur[20:24])
+
+# calculate new features
+pur$new_user_pct <- (pur$new_users / pur$users)
+pur$revenue_per_user <- (pur$revenue / pur$users)
+pur$cost_per_user <- (pur$cost / pur$users)
+pur$session_per_user <-(pur$sessions / pur$users)
+
+# use the log function 
+pur$users_log <- log(pur$users)
+
+# analyze new columns features with describe function from Hmisc package
+library(Hmisc)
+describe(pur[25:29])
+
+# use the subset function to create a new dataset
+google <- subset(pur, source == 'google')
+
+# inspect the subset 
+summary(google)
+
+# correlation plots
+attach(google)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(2,2))
+plot(google$pages_session, google$avg_session_duration, 
+          main = 'Strong Positive Correlation(0.94)',xlab = 'Pages per Session', 
+          ylab = 'Avg Session Duration')
+plot(google$bounce_rate, google$pages_session, main = 'Strong Negative 
+     Correlation(-0.96)', xlab = 'Bounce Rate', ylab = 'Pages per Session')
+plot(google$transactions, google$revenue, main = 'Medium Correlation(0.66)', 
+     xlab = 'Transactions', ylab = 'Revenue')
+plot(google$smart_goals_one_conversion, google$purchase_complete_goal_four,
+     main = 'No Correlation(0.00)', xlab = 'Smart Goal 1 Conversion',
+     ylab = 'Purchase Complete Goal 4')
+par(opar)
+detach(google)
+
+# use the cor function to see the correlation relationships between features 1:16
+google_corr_matrix <- cor(google[25:29])
+print(google_corr_matrix)
+
+# import the package corrgram to use the corrgram function
+library(corrgram)
+
+# use the help funciton to find help 
+help("corrgram")
+
+# use the corrgram function to see a corrgram of those relationships for features 1:16
+corrgram(google[1:10], order = TRUE)
+
+# use the corrgram function to see a corrgram of those relationships for features 25:29
+corrgram(google[25:29], order = TRUE, upper.panel = panel.cor)
+
+# plot multiple graphs 
+attach(google)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(2,2))
+hist(revenue_per_user, col='red', main='Histogram Revenue per User')
+plot(x=bounce_rate, y=avg_session_duration, col='blue', main='Plot')
+plot(users_log, col='purple', main='Users(log)')
+boxplot(bounce_rate, col='orange', main='Boxplot Bounce Rate ')
+par(opar)
+detach(google)
+
+# Recording variables by using logical operations
+google$session_category[google$session_per_user > 1.15] <- "High Sessions"
+
+google$session_category[google$session_per_user >= 1.06 & 
+                          google$session_per_user <= 1.20] <- 'AVG Sessions'
+
+google$session_category[google$session_per_user < 1.06] <- 'Low Sessions' 
+
+# turn new category into a factor 
+google$session_category <- factor(google$session_category)
+
+# use the describe function on session category
+describe(google$session_category)
+
+# plot using the ggplot function in ggplot2 package
+library(ggplot2)
+ggplot(google, aes(x=bounce_rate, y=revenue_per_user, col=session_category)) + geom_point()
+
+ggplot(google, aes(x=ecommerce_conversion_rate, y=revenue_per_user, col=session_category)) + geom_point()
+
+# get working directory
+getwd()
+
+# write file to csv in local computer
+#google_analytics <- write.csv(google, file='/Users/saultamariz/Desktop/google_analytics.csv')
